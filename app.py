@@ -411,7 +411,7 @@ def create_chapter_labeled_book(ebook_file_path):
                     file_path = os.path.join(folder_path, filename)
 
                     try:
-                        with open(file_path, 'r', encoding='utf-8') as file:
+                        with open(file_path, 'r', encoding='utf-8') as file):
                             text = file.read()
                             # Insert "NEWCHAPTERABC" at the beginning of each chapter's text
                             if text:
@@ -816,6 +816,7 @@ def convert_ebook_to_audio(ebook_file, target_voice_file, language, use_custom_m
     except Exception as e:
         print(f"Error updating progress: {e}")
     print(f"Audiobook created at {m4b_filepath}")
+    save_progress_and_link(1.0, m4b_filepath)  # Save progress and link after conversion
     return f"Audiobook created at {m4b_filepath}", m4b_filepath
 
 
@@ -831,6 +832,17 @@ def download_audiobooks():
     audiobook_output_path = os.path.join(".", "Audiobooks")
     return list_audiobook_files(audiobook_output_path)
 
+def save_progress_and_link(progress, link):
+    with open("progress.txt", "w") as file:
+        file.write(f"{progress},{link}")
+
+def load_progress_and_link():
+    try:
+        with open("progress.txt", "r") as file:
+            data = file.read().split(",")
+            return float(data[0]), data[1]
+    except FileNotFoundError:
+        return 0.0, ""
 
 # Gradio UI setup
 def run_gradio_interface():
@@ -982,6 +994,11 @@ def run_gradio_interface():
             download_audiobooks,
             outputs=[download_files]
         )
+
+        # Load saved progress and link on page refresh
+        saved_progress, saved_link = load_progress_and_link()
+        output.value = f"Progress: {saved_progress * 100}%, Download Link: {saved_link}"
+        audio_player.value = saved_link
 
     # Get the correct local IP or localhost
     hostname = socket.gethostname()
